@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>陪伴监管系统</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ========== 顶部状态栏（积分、等级） ========== -->
+  <div class="status-bar">
+    <span>⭐ <b id="score">0</b></span>
+    <span>🎖️ Lv.<b id="level">1</b></span>
+  </div>
+
+  <!-- ========== 主内容区（三个页面切换） ========== -->
+  <div class="main-content">
+    <!-- 任务页面 -->
+    <div id="taskPage" class="page active">
+      <h2>📋 今日计划清单</h2>
+      <div class="plan-form">
+        <input type="text" id="taskInput" placeholder="例如：早上7点背单词" />
+        <input type="time" id="taskTime" value="07:00" />
+        <button id="addTaskBtn">➕ 添加</button>
+      </div>
+      <ul id="taskList"></ul>
+      <button id="simulateReminder">⏰ 模拟强制提醒</button>
+    </div>
+
+    <!-- 形象页面 -->
+    <div id="avatarPage" class="page">
+      <h2>🦊 我的陪伴精灵</h2>
+      <div class="avatar-area">
+        <img id="avatarImg" src="https://em-content.zobj.net/thumbs/120/apple/325/fox_1f98a.png" alt="小福" />
+        <p id="avatarName">小福</p>
+        <p id="avatarLevel">互动等级：1</p>
+        <p id="avatarDesc">它还有点害羞，多和它互动吧~</p>
+      </div>
+      <div class="interact-actions">
+        <button id="interactBtn">🎁 消耗 50 积分互动升级</button>
+        <button id="previewVoiceBtn">🔊 试听小福的声音</button>
+        <button id="customizeAvatarBtn">🎨 自定义形象</button>
+        <button id="trainAvatarBtn">🗣️ 训练形象语句</button>
+      </div>
+      <p class="hint">互动升级可解锁更多语气和动作哦</p>
+      
+      <!-- 对话窗口 -->
+      <div class="avatar-chat-box">
+        <div class="chat-header">💬 与形象对话</div>
+        <div id="chatMessages" class="chat-messages"></div>
+        <div class="chat-input-area">
+          <input type="text" id="chatInput" placeholder="说点什么吧..." />
+          <button id="sendChatBtn">发送</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 个人页面 -->
+    <div id="profilePage" class="page">
+      <h2>👤 个人中心</h2>
+      <div class="profile-section">
+        <div class="form-group">
+          <label>昵称</label>
+          <input type="text" id="nicknameInput" placeholder="请输入昵称" />
+          <button id="saveNicknameBtn">保存</button>
+        </div>
+        <div class="form-group">
+          <label>每日提醒</label>
+          <select id="reminderSelect">
+            <option value="1">开启</option>
+            <option value="0">关闭</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>任务界面主题色</label>
+          <div class="color-picker-group">
+            <input type="color" id="taskThemeColor" value="#4e6ef2" />
+            <span id="themeColorValue">#4e6ef2</span>
+          </div>
+          <button id="applyThemeBtn">应用主题色</button>
+        </div>
+        <div class="form-group">
+          <label>形象设定</label>
+          <textarea id="avatarSettingInput" placeholder="例如：它是一个温柔又坚定的陪伴精灵，善于鼓励你完成目标。" rows="3"></textarea>
+          <button id="saveAvatarSettingBtn">保存设定</button>
+        </div>
+        <div class="form-group">
+          <label>点击检测授权</label>
+          <button id="askClickConsentBtn">询问授权</button>
+          <p class="hint">此检测只用于检测你是否离开页面，不读取其他应用内容。</p>
+        </div>
+        <div class="form-group">
+          <label>形象声音文件（.mp3/.wav）</label>
+          <input type="file" id="voiceFileInput" accept=".mp3,.wav,.m4a" />
+          <button id="uploadVoiceBtn">上传声音</button>
+        </div>
+        <div class="form-group">
+          <label>积分购买（模拟）</label>
+          <button id="buyPointsBtn">💰 购买 100 积分</button>
+        </div>
+        <p class="hint">* 本 Demo 中所有购买均为模拟操作</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 底部导航栏 ========== -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" data-page="taskPage">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">任务</span>
+    </div>
+    <div class="nav-item" data-page="avatarPage">
+      <span class="nav-icon">🦊</span>
+      <span class="nav-label">形象</span>
+    </div>
+    <div class="nav-item" data-page="profilePage">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">个人</span>
+    </div>
+  </nav>
+
+  <!-- ========== 完成动画浮层（任务完成后弹出） ========== -->
+  <div id="completeOverlay" class="hidden">
+    <div class="complete-card">
+      <img src="https://em-content.zobj.net/thumbs/120/apple/325/fox_1f98a.png" alt="小福" class="complete-char" />
+      <p class="complete-text" id="completeText">太棒啦！</p>
+    </div>
+  </div>
+
+  <!-- ========== 强制提醒半屏弹窗（保留） ========== -->
+  <div id="reminderOverlay" class="hidden">
+    <div class="modal">
+      <div class="character">
+        <img src="https://em-content.zobj.net/thumbs/120/apple/325/fox_1f98a.png" alt="小狐狸" id="charImg" />
+        <p id="charMessage">该起床啦！</p>
+      </div>
+      <p class="task-name" id="modalTaskName">任务：背单词</p>
+      <div class="modal-actions">
+        <button id="startTaskBtn">开始任务（长按 3 秒解锁）</button>
+        <button id="snoozeBtn">再躺 5 分钟（剩余 <span id="snoozeCount">1</span> 次）</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 任务关怀半屏弹窗 ========== -->
+  <div id="overdueOverlay" class="modal-overlay hidden">
+    <div class="modal-content overdue-card">
+      <div class="modal-header">
+        <h3>💖 关怀提示</h3>
+        <button class="modal-close" data-modal="overdueOverlay">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="overdue-avatar-wrapper">
+          <img id="overdueAvatarImg" class="overdue-avatar" src="https://em-content.zobj.net/thumbs/120/apple/325/fox_1f98a.png" alt="形象" />
+        </div>
+        <p id="overdueMessage">你还没有完成任务，我很担心你哦～</p>
+        <div class="modal-actions">
+          <button id="overdueCompleteBtn">我已完成</button>
+          <button id="overdueNotCompleteBtn">还没完成</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 形象自定义模态框 ========== -->
+  <div id="customizeAvatarModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>🎨 自定义形象</h3>
+        <button class="modal-close" data-modal="customizeAvatarModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="upload-section">
+          <p>上传你的照片，系统将生成动画形象</p>
+          <input type="file" id="avatarPhotoInput" accept="image/*" />
+          <button id="uploadPhotoBtn">📤 上传照片</button>
+          <p class="hint">支持 JPG、PNG 格式，建议 200x200px 以上</p>
+        </div>
+        <div id="previewSection" class="preview-section hidden">
+          <p>预览效果：</p>
+          <img id="previewImg" src="" alt="预览" />
+          <button id="confirmAvatarBtn">✓ 确认使用</button>
+          <button id="cancelAvatarBtn">✕ 重新选择</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 语句训练模态框 ========== -->
+  <div id="trainAvatarModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>🗣️ 训练形象语句</h3>
+        <button class="modal-close" data-modal="trainAvatarModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="training-section">
+          <p>教会你的形象说什么吧</p>
+          <textarea id="trainingInput" placeholder="输入要训练的语句（最多 200 字）" maxlength="200"></textarea>
+          <p class="hint">⚠️ 请勿输入违法、暴力或歧视内容</p>
+          <button id="trainSentenceBtn">🚀 开始训练</button>
+        </div>
+        <div id="trainingList" class="training-list">
+          <h4>已训练的语句：</h4>
+          <ul id="sentencesList"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 同意检测模态框 ========== -->
+  <div id="consentModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>🔍 页面检测授权</h3>
+        <button class="modal-close" data-modal="consentModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>此功能仅检测页面是否可见和你的点击行为，用于提醒你返回继续任务。</p>
+        <p><strong>不会读取或访问其他应用程序的内容。</strong></p>
+        <p>这有助于我更好地陪伴你，及时提醒未完成的任务。</p>
+        <div class="modal-actions">
+          <button id="consentAgreeBtn">同意</button>
+          <button id="consentDisagreeBtn">拒绝</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
